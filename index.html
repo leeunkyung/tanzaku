@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>나만의 탄자쿠 만들기</title>
+  <!-- 구글 폰트: Zen Maru Gothic (일본어 동글동글 폰트) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+  <!-- html2canvas 라이브러리 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    }
+    body {
+      background-color: #f4f6f9;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 15px;
+    }
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.3rem;
+      color: #2c3e50;
+      margin-bottom: 15px;
+    }
+    
+    /* 단계 표시 */
+    .step-indicator {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      background: #edf2f7;
+      border-radius: 12px;
+      padding: 4px;
+    }
+    .step-tab {
+      flex: 1;
+      text-align: center;
+      padding: 8px 0;
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #718096;
+      border-radius: 8px;
+    }
+    .step-tab.active {
+      background: #4a90e2;
+      color: white;
+    }
+
+    .step-content {
+      display: none;
+    }
+    .step-content.active {
+      display: block;
+    }
+
+    h2 {
+      font-size: 1.05rem;
+      margin-bottom: 12px;
+      color: #34495e;
+    }
+
+    /* 그리드 선택 창 */
+    .grid-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .option-card {
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .option-card.selected {
+      border-color: #4a90e2;
+      background: #ebf8ff;
+      transform: translateY(-2px);
+    }
+    .option-card img {
+      width: 60px;
+      height: 60px;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    /* 카테고리 탭 */
+    .category-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 15px;
+    }
+    .cat-btn {
+      padding: 8px 4px;
+      border: 1px solid #cbd5e0;
+      background: #f7fafc;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      color: #4a5568;
+    }
+    .cat-btn.active {
+      background: #3182ce;
+      color: white;
+      border-color: #3182ce;
+    }
+
+    /* 문구 목록 */
+    .phrase-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .phrase-card {
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      background: #ffffff;
+      transition: all 0.2s;
+    }
+    .phrase-card.selected {
+      border-color: #4a90e2;
+      background: #ebf8ff;
+    }
+    .phrase-jp {
+      font-family: 'Zen Maru Gothic', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #2d3748;
+      margin-bottom: 2px;
+    }
+    .phrase-kr {
+      font-size: 0.8rem;
+      color: #718096;
+    }
+
+    /* 버튼 영역 */
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-prev {
+      background: #e2e8f0;
+      color: #4a5568;
+    }
+    .btn-next {
+      background: #4a90e2;
+      color: white;
+    }
+
+    /* 탄자쿠 카드 결과 영역 */
+    .result-container {
+      display: flex;
+      justify-content: center;
+      margin: 15px 0;
+    }
+    .tanzaku-card {
+      width: 180px;
+      height: 420px;
+      position: relative;
+      border-radius: 8px;
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+    /* 구멍 지점 */
+    .hole {
+      width: 12px;
+      height: 12px;
+      background: #ffffff;
+      border: 2px solid #a0aec0;
+      border-radius: 50%;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    /* 상단 기본 문구 (칠석) */
+    .title-box {
+      background: rgba(255,255,255,0.88);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      letter-spacing: 2px;
+      flex-shrink: 0;
+    }
+    /* 세로쓰기 일본어 문구 (Zen Maru Gothic 적용) */
+    .vertical-text {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1a202c;
+      line-height: 1.3;
+      letter-spacing: 2px;
+      max-height: 250px;
+      word-break: break-all;
+    }
+    /* 하단 캐릭터 (65x65px 고정) */
+    .char-img {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 65px;
+      height: 65px;
+      max-width: 65px;
+      max-height: 65px;
+      object-fit: contain;
+    }
+    
+    .btn-save {
+      background: #38a169;
+      color: white;
+      width: 100%;
+      padding: 14px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn-restart {
+      background: #a0aec0;
+      color: white;
+      width: 100%;
+      padding: 10px;
+      font-size: 0.9rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🎋 나만의 탄자쿠 만들기</h1>
+
+  <!-- 단계 표시 -->
+  <div class="step-indicator">
+    <div class="step-tab active" id="tab1">1. 배경</div>
+    <div class="step-tab" id="tab2">2. 소원</div>
+    <div class="step-tab" id="tab3">3. 캐릭터</div>
+    <div class="step-tab" id="tab4">4. 완성</div>
+  </div>
+
+  <!-- STEP 1: 배경 선택 -->
+  <div class="step-content active" id="step1">
+    <h2>탄자쿠 배경을 선택하세요</h2>
+    <div class="grid-options">
+      <div class="option-card selected" onclick="selectBg(1)">
+        <img src="bg1.png" alt="배경1" onerror="this.src='https://via.placeholder.com/60?text=Bg1'">
+        <p style="font-size:0.8rem; margin-top:4px;">배경 1</p>
+      </div>
+      <div class="option-card" onclick="selectBg(2)">
+        <img src="bg2.png" alt="배경2" onerror="this.src='https://via.placeholder.com/60?text=Bg2'">
+        <p style="font-size:0.8rem; margin-top:4px;">배경 2</p>
+      </div>
+      <div class="option-card" onclick="selectBg(3)">
+        <img src="bg3.png" alt="배경3" onerror="this.src='https://via.placeholder.com/60?text=Bg3'">
+        <p style="font-size:0.8rem; margin-top:4px;">배경 3</p>
+      </div>
+      <div class="option-card" onclick="selectBg(4)">
+        <img src="bg4.png" alt="배경4" onerror="this.src='https://via.placeholder.com/60?text=Bg4'">
+        <p style="font-size:0.8rem; margin-top:4px;">배경 4</p>
+      </div>
+      <div class="option-card" onclick="selectBg(5)">
+        <img src="bg5.png" alt="배경5" onerror="this.src='https://via.placeholder.com/60?text=Bg5'">
+        <p style="font-size:0.8rem; margin-top:4px;">배경 5</p>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-next" style="width:100%" onclick="nextStep(2)">다음 (소원 선택) ➔</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: 소원 문구 선택 (카테고리형) -->
+  <div class="step-content" id="step2">
+    <h2>소원 주제를 선택하세요</h2>
+    
+    <!-- 카테고리 버튼 -->
+    <div class="category-tabs">
+      <button class="cat-btn active" onclick="showCategory('학업')">학업</button>
+      <button class="cat-btn" onclick="showCategory('꿈·진로')">꿈·진로</button>
+      <button class="cat-btn" onclick="showCategory('우정')">우정</button>
+      <button class="cat-btn" onclick="showCategory('건강')">건강</button>
+      <button class="cat-btn" onclick="showCategory('행복')">행복</button>
+      <button class="cat-btn" onclick="showCategory('재미있는 소원')">재미</button>
+    </div>
+
+    <!-- 문구 리스트 -->
+    <div class="phrase-list" id="phraseList">
+      <!-- 자바스크립트로 동적 생성됨 -->
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-prev" onclick="nextStep(1)">이전</button>
+      <button class="btn btn-next" onclick="nextStep(3)">다음 (캐릭터) ➔</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: 캐릭터 선택 -->
+  <div class="step-content" id="step3">
+    <h2>캐릭터를 선택하세요</h2>
+    <div class="grid-options">
+      <div class="option-card selected" onclick="selectChar(1)">
+        <img src="char1.png" alt="캐릭터1" onerror="this.src='https://via.placeholder.com/60?text=Char1'">
+        <p style="font-size:0.8rem; margin-top:4px;">캐릭터 1</p>
+      </div>
+      <div class="option-card" onclick="selectChar(2)">
+        <img src="char2.png" alt="캐릭터2" onerror="this.src='https://via.placeholder.com/60?text=Char2'">
+        <p style="font-size:0.8rem; margin-top:4px;">캐릭터 2</p>
+      </div>
+      <div class="option-card" onclick="selectChar(3)">
+        <img src="char3.png" alt="캐릭터3" onerror="this.src='https://via.placeholder.com/60?text=Char3'">
+        <p style="font-size:0.8rem; margin-top:4px;">캐릭터 3</p>
+      </div>
+      <div class="option-card" onclick="selectChar(4)">
+        <img src="char4.png" alt="캐릭터4" onerror="this.src='https://via.placeholder.com/60?text=Char4'">
+        <p style="font-size:0.8rem; margin-top:4px;">캐릭터 4</p>
+      </div>
+      <div class="option-card" onclick="selectChar(5)">
+        <img src="char5.png" alt="캐릭터5" onerror="this.src='https://via.placeholder.com/60?text=Char5'">
+        <p style="font-size:0.8rem; margin-top:4px;">캐릭터 5</p>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-prev" onclick="nextStep(2)">이전</button>
+      <button class="btn btn-next" onclick="generateTanzaku()">탄자쿠 완성하기 ✨</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: 최종 저장 및 완성 -->
+  <div class="step-content" id="step4">
+    <h2 style="text-align:center;">짜잔! 완성된 나만의 탄자쿠야!</h2>
+    <p style="text-align:center; font-size:0.85rem; color:#666; margin-bottom:10px;">이미지로 저장해서 간직해봐! 📸</p>
+    
+    <div class="result-container">
+      <div class="tanzaku-card" id="tanzakuPreview" style="background-image: url('bg1.png');">
+        <div class="hole"></div>
+        
+        <div class="vertical-text" id="previewText">集中力が高まりますように。</div>
+        <img src="char1.png" class="char-img" id="previewChar" alt="캐릭터">
+      </div>
+    </div>
+
+    <button class="btn-save" onclick="downloadImage()">📥 탄자쿠 이미지 내 폰에 저장</button>
+    <button class="btn-restart" onclick="nextStep(1)">🔄 처음부터 다시 만들기</button>
+  </div>
+
+</div>
+
+<script>
+  // 36개 최종 문구 데이터 (엑셀 내용 반영)
+  const phrasesData = {
+    "학업": [
+      { jp: "集中力が高まりますように。", kr: "집중력이 높아지기를" },
+      { jp: "成績が上がりますように。", kr: "성적이 오르기를" },
+      { jp: "勉強がもっと楽しくなりますように。", kr: "공부가 더 즐거워지기를" },
+      { jp: "毎日こつこつ勉強できますように。", kr: "매일 꾸준히 공부할 수 있기를" },
+      { jp: "苦手な教科が得意になりますように。", kr: "어려워하는 과목을 잘하게 되기를" },
+      { jp: "努力が実りますように。", kr: "노력이 결실을 맺기를" }
+    ],
+    "꿈·진로": [
+      { jp: "自分の夢がかないますように。", kr: "나의 꿈이 이루어지기를" },
+      { jp: "希望する大学に合格できますように。", kr: "희망하는 대학에 합격할 수 있기를" },
+      { jp: "自分に合った進路が見つかりますように。", kr: "나에게 맞는 진로를 찾을 수 있기를" },
+      { jp: "夢に一歩ずつ近づけますように。", kr: "꿈에 한 걸음씩 가까워질 수 있기를" },
+      { jp: "やりたいことが見つかりますように。", kr: "하고 싶은 일을 찾을 수 있기를" },
+      { jp: "希望する進路に進めますように。", kr: "희망하는 진로로 나아갈 수 있기를" }
+    ],
+    "우정": [
+      { jp: "友だちとずっと仲良くいられますように。", kr: "친구들과 계속 사이좋게 지낼 수 있기를" },
+      { jp: "すてきな友だちに出会えますように。", kr: "좋은 친구를 만날 수 있기를" },
+      { jp: "友だちと楽しい思い出をたくさん作れますように。", kr: "친구들과 즐거운 추억을 많이 만들 수 있기를" },
+      { jp: "みんなともっと仲良くなれますように。", kr: "모두와 더 친해질 수 있기를" },
+      { jp: "大切な友だちがいつも笑顔でいられますように。", kr: "소중한 친구가 언제나 웃을 수 있기를" },
+      { jp: "友だちとの絆がもっと深まりますように。", kr: "친구들과의 유대가 더 깊어지기를" }
+    ],
+    "건강": [
+      { jp: "毎日元気に過ごせますように。", kr: "매일 건강하게 지낼 수 있기를" },
+      { jp: "家族みんなが健康でいられますように。", kr: "가족 모두 건강하게 지낼 수 있기를" },
+      { jp: "心も体も元気でいられますように。", kr: "몸과 마음 모두 건강하게 지낼 수 있기를" },
+      { jp: "ぐっすり眠れますように。", kr: "푹 잘 수 있기를" },
+      { jp: "けがをしませんように。", kr: "다치지 않기를" },
+      { jp: "ストレスがたまりませんように。", kr: "스트레스가 쌓이지 않기를" }
+    ],
+    "행복": [
+      { jp: "毎日幸せに過ごせますように。", kr: "매일 행복하게 지낼 수 있기를" },
+      { jp: "笑顔いっぱいの毎日になりますように。", kr: "웃음 가득한 매일이 되기를" },
+      { jp: "楽しいことがたくさんありますように。", kr: "즐거운 일이 많이 생기기를" },
+      { jp: "いいことがたくさんありますように。", kr: "좋은 일이 많이 생기기를" },
+      { jp: "大切な人たちが幸せでありますように。", kr: "소중한 사람들이 행복하기를" },
+      { jp: "いつも前向きでいられますように。", kr: "언제나 긍정적인 마음으로 지낼 수 있기를" }
+    ],
+    "재미있는 소원": [
+      { jp: "推しに会えますように。", kr: "최애를 만날 수 있기를" },
+      { jp: "おいしいものをたくさん食べられますように。", kr: "맛있는 것을 많이 먹을 수 있기를" },
+      { jp: "夏休みがもっと長くなりますように。", kr: "여름방학이 더 길어지기를" },
+      { jp: "毎日好きなだけ寝られますように。", kr: "매일 실컷 잘 수 있기를" },
+      { jp: "欲しいものが全部買えますように。", kr: "갖고 싶은 것을 다 살 수 있기를" },
+      { jp: "旅行にたくさん行けますように。", kr: "여행을 많이 갈 수 있기를" }
+    ]
+  };
+
+  // 현재 선택된 사용자 값
+  let selectedBg = 'bg1.png';
+  let selectedPhrase = '集中力が高まりますように。';
+  let selectedChar = 'char1.png';
+
+  // 스텝 이동
+  function nextStep(stepNum) {
+    document.querySelectorAll('.step-tab').forEach((tab, index) => {
+      if (index + 1 === stepNum) tab.classList.add('active');
+      else tab.classList.remove('active');
+    });
+
+    document.querySelectorAll('.step-content').forEach((content, index) => {
+      if (index + 1 === stepNum) content.classList.add('active');
+      else content.classList.remove('active');
+    });
+  }
+
+  // 배경 선택
+  function selectBg(num) {
+    selectedBg = `bg${num}.png`;
+    const cards = document.querySelectorAll('#step1 .option-card');
+    cards.forEach((card, idx) => {
+      if (idx === num - 1) card.classList.add('selected');
+      else card.classList.remove('selected');
+    });
+  }
+
+  // 카테고리 탭 변경
+  function showCategory(catName) {
+    // 탭 버튼 활성화
+    const buttons = document.querySelectorAll('.cat-btn');
+    buttons.forEach(btn => {
+      if (btn.innerText === catName || (catName === '재미있는 소원' && btn.innerText === '재미')) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // 목록 렌더링
+    const listContainer = document.getElementById('phraseList');
+    listContainer.innerHTML = '';
+
+    phrasesData[catName].forEach((item) => {
+      const card = document.createElement('div');
+      card.className = 'phrase-card';
+      if (item.jp === selectedPhrase) card.classList.add('selected');
+
+      card.onclick = () => {
+        document.querySelectorAll('.phrase-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedPhrase = item.jp;
+      };
+
+      card.innerHTML = `
+        <div class="phrase-jp">${item.jp}</div>
+        <div class="phrase-kr">${item.kr}</div>
+      `;
+      listContainer.appendChild(card);
+    });
+  }
+
+  // 캐릭터 선택
+  function selectChar(num) {
+    selectedChar = `char${num}.png`;
+    const cards = document.querySelectorAll('#step3 .option-card');
+    cards.forEach((card, idx) => {
+      if (idx === num - 1) card.classList.add('selected');
+      else card.classList.remove('selected');
+    });
+  }
+
+  // 최종 결과 생성
+  function generateTanzaku() {
+    const card = document.getElementById('tanzakuPreview');
+    const textEl = document.getElementById('previewText');
+    const charEl = document.getElementById('previewChar');
+
+    card.style.backgroundImage = `url('${selectedBg}')`;
+    textEl.innerText = selectedPhrase;
+    charEl.src = selectedChar;
+
+    nextStep(4);
+  }
+
+  // 이미지 다운로드 (html2canvas)
+  function downloadImage() {
+    const cardElement = document.getElementById('tanzakuPreview');
+    html2canvas(cardElement, {
+      scale: 3, // 고화질 저장
+      useCORS: true,
+      backgroundColor: null
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = 'my_tanzaku.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  }
+
+  // 초기화 실행
+  showCategory('학업');
+</script>
+
+</body>
+</html>
